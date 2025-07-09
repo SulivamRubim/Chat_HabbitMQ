@@ -1,0 +1,40 @@
+version: "3.9"
+
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    hostname: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+
+  producer:
+    build:
+      context: .
+      dockerfile: producer/Dockerfile
+    environment:
+      - RABBIT_HOST=rabbitmq
+      - RABBIT_QUEUE=srb_chat_queue
+      - SENDER_NAME=Sulivam
+    depends_on:
+      - rabbitmq
+    restart: on-failure
+    stdin_open: true     # permite entrada de texto
+    tty: true            # mantém terminal aberto para interação
+
+  consumer:
+    build:
+      context: .
+      dockerfile: consumer/Dockerfile
+    environment:
+      - RABBIT_HOST=rabbitmq
+      - RABBIT_QUEUE=srb_chat_queue
+    volumes:
+      - ./consumer/chat.log:/app/chat.log
+    depends_on:
+      - rabbitmq
+    restart: on-failure
